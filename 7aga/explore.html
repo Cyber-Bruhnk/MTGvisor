@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore Alexandria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    async function loadReviews(placeId) {
+        console.log('Loading reviews for place:', placeId);
+        const reviewSection = document.getElementById(`reviews-${placeId}`);
+        const reviewsList = reviewSection.querySelector('.reviews-list');
+    
+        // Toggle visibility of the review section
+        if (!reviewSection.classList.contains('hidden')) {
+            reviewSection.classList.add('hidden');
+            return; // Exit if we are hiding the reviews
+        }
+    
+        // Unhide the review section and show loading message
+        reviewSection.classList.remove('hidden');
+        reviewsList.innerHTML = '<p>Loading reviews...</p>';
+    
+        try {
+            const response = await fetch(`http://localhost/7aga/get_reviews.php?place_id=${placeId}`);
+    
+            if (!response.ok) {
+                throw new Error('Failed to fetch reviews.');
+            }
+    
+            const reviews = await response.json();
+    
+            // Populate reviews in a table
+            if (reviews.length > 0) {
+                reviewsList.innerHTML = `
+                    <table class="table-auto border-collapse">
+                        <thead>
+                            <tr>
+                                <th  class="border px-4 py-2 text-left">Username</th>
+                                <th class="border px-4 py-2 text-left">Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${reviews.map(review => `
+                                <tr>
+                                    <td class="border px-4 py-2">${review.username}</td>
+                                    <td class="border px-4 py-2">${review.comment}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                reviewsList.innerHTML = '<p>No reviews yet. Be the first to leave one!</p>';
+            }
+        } catch (error) {
+            reviewsList.innerHTML = `<p class="text-red-500">Failed to load reviews. Try again later.</p>`;
+            console.error('Error loading reviews:', error);
+        }
+    }
+    
+      
+
+
+    async function submitReview(event, placeId) {
+      event.preventDefault();
+      const reviewInput = document.getElementById(`review-input-${placeId}`);
+      const review = reviewInput.value;
+      if (!review) return;
+
+      try {
+        const response = await fetch('http://localhost/7aga/submit_review.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ place_id: placeId, comment: review })
+        });
+
+        if (response.ok) {
+          console.log(response);
+          reviewInput.value = '';
+          loadReviews(placeId);
+        } else {
+          alert('Failed to submit review.');
+        }
+      } catch (error) {
+        alert('Error submitting review.');
+      }
+    }
+
+    function toggleSeeMore() {
+      const extraLocations = document.querySelectorAll('.extra-location');
+      const btn = document.getElementById('see-more-btn');
+      const scrollToElement = document.querySelector('.extra-location');
+
+      let isHidden = [...extraLocations].some(loc => loc.classList.contains('hidden'));
+
+      extraLocations.forEach(loc => loc.classList.toggle('hidden', !isHidden));
+
+      if (isHidden) {
+        btn.textContent = 'See Less';
+        if (scrollToElement) {
+          scrollToElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        btn.textContent = 'See More';
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-white">
+  <!-- Header Section with Background Image and Navigation Links -->
+  <section class="relative h-[300px] md:h-[400px] bg-cover bg-center flex items-center justify-center text-white"
+           style="background-image: url('http://localhost/images/Alexa.jpg');">
+    <nav class="absolute top-0 left-0 w-full flex justify-end p-4 space-x-6 text-black font-bold">
+      <a href="home.html" class="hover:text-blue-300">Home</a>
+      <a href="explore.html" class="hover:text-blue-300">Explore</a>
+      <a href="food.html" class="hover:text-blue-300">Food</a>
+      <a href="profile.php" class="hover:text-blue-300">Profile</a>
+      <a href="login.html" class="hover:text-blue-300">Logout</a>
+
+    </nav>
+    <h1 class="text-4xl md:text-6xl font-bold drop-shadow-lg">Explore your hotspot</h1>
+  </section>
+
+  <!-- Cards Section with Review Panels -->
+  <section class="space-y-16 my-10 mx-4 md:mx-16">
+    <script>
+      const locations = [
+        { id: 1, title: "Montazah Palace", img: "http://localhost/images/montaza-2.jpg", desc: "The Montazah Palace is a beautiful historical palace in Alexandria, surrounded by lush gardens and stunning sea views.", wiki: "https://en.wikipedia.org/wiki/Montaza_Palace" },
+        { id: 2, title: "Ras El-Tin Palace", img: "http://localhost/images/R2.jpg", desc: "Ras El-Tin Palace is one of the oldest royal palaces in Egypt, known for its unique architecture and historical importance.", wiki: "https://en.wikipedia.org/wiki/Ras_el-Tin_Palace" },
+        { id: 3, title: "Alexandria Bibliotheca", img: "http://localhost/images/L2.jpg", desc: "The Alexandria Bibliotheca is a modern architectural marvel and a revival of the ancient library, serving as a cultural center.", wiki: "https://en.wikipedia.org/wiki/Bibliotheca_Alexandrina" },
+        { id: 4, title: "Roman Amphitheatre", img: "http://localhost/images/Rome.jpg", desc: "The Roman Amphitheatre in Alexandria is a testament to ancient Roman engineering and is still a popular tourist destination.", wiki: "https://www.traveltoegypt.net/discover-egypt/alexandria-attractions/roman-amphitheatre-of-alexandria" },
+        { id: 5, title: "Qaitbay Citadel", img: "http://localhost/images/QC.jpg", desc: "The Qaitbay Citadel is a historic fortress located on the Mediterranean coast in Alexandria. It was built to protect the city from naval threats and is now a popular landmark.", wiki: "https://en.wikipedia.org/wiki/Qaitbay_Citadel" }
+      ];
+
+      document.write(locations.map((location, index) => `
+        <div class="flex flex-col md:flex-row items-center md:space-x-8 ${index >= 3 ? 'hidden extra-location' : ''}">
+          <img src="${location.img}" alt="${location.title}" 
+               class="w-full md:w-1/2 h-[300px] object-cover rounded-lg">
+          <div class="w-full md:w-1/2 mt-6 md:mt-0 text-center md:text-left">
+            <a href="${location.wiki}" target="_blank" class="text-3xl font-bold text-blue-700 mb-4 hover:underline">
+              ${location.title}
+            </a>
+            <p class="text-lg text-gray-700">${location.desc}</p>
+            <button onclick="loadReviews(${location.id})" class="mt-4 bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-800">
+              View Reviews
+            </button>
+            <div id="reviews-${location.id}" class="hidden mt-6 p-4 border border-gray-300 rounded-lg">
+              <ul class="reviews-list mb-4"></ul>
+              <form onsubmit="submitReview(event, ${location.id})">
+                <input id="review-input-${location.id}" type="text" placeholder="Write a review..." class="w-full p-2 border border-gray-400 rounded mb-2">
+                <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-800">
+                  Submit
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `).join(''));
+    </script>
+  </section>
+
+  <!-- See More Button -->
+  <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2">
+    <button id="see-more-btn" onclick="toggleSeeMore()" class="bg-cyan-600 text-white py-2 px-4 rounded-full text-xl font-semibold hover:bg-cyan-800 transition duration-200">
+      See More
+    </button>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-blue-700 text-white py-20 text-center mt-20">
+    <p class="text-4xl">Need more assistance?<br>Feel Free to reach out!</p>
+    <div class="flex justify-center gap-6 mt-6">
+      <button onclick="window.location.href='contact.html';" 
+              class="bg-cyan-600 text-white py-2 px-4 rounded-full mt-4 text-xl font-semibold hover:bg-cyan-800 transition duration-200">
+        Contact Us
+      </button>
+    </div>
+  </footer>
+</body>
+</html>
